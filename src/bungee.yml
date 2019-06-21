@@ -1,0 +1,5 @@
+name: Core
+main: com.stelch.games2.core.BungeeCore
+version: s_core:1.14.2
+description: GameCore
+author: Aspire
