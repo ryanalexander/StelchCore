@@ -19,6 +19,15 @@ public class admin implements CommandExecutor {
         if((sender instanceof Player)&& BukkitGamePlayer.getGamePlayer(sender.getName()).getRank().getLevel()<10){sender.sendMessage(Text.format(en.PERM_NO_PERMISSION));return false;}
 
         switch(((args.length>=1)?args[0]:"other")) {
+            case "getuser":
+                BukkitGamePlayer player = BukkitGamePlayer.getGamePlayer(args[1]);
+                if(!(player.isStored())){sender.sendMessage(Text.format(String.format("&cAdmin> &7It seems that '&e%s&7' has never joined this server.",args[1])));return false;}
+
+                sender.sendMessage("Name: "+player.getUsername());
+                sender.sendMessage("UUID: "+player.getUuid());
+                sender.sendMessage("Rank: "+player.getRank());
+                sender.sendMessage("online: "+player.isonline());
+                break;
             case "setrank":
                 if(!(BukkitGamePlayer.getGamePlayer(args[1]).isStored())){sender.sendMessage(Text.format(String.format("&cAdmin> &7It seems that '&e%s&7' has never joined this server.",args[1])));return false;}
                 if(args.length>2){

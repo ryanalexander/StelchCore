@@ -185,7 +185,17 @@ public class ProxyGamePlayer {
             ProxyGamePlayer=new ProxyGamePlayer(player);
         }
         return ProxyGamePlayer;
+    }
 
+    public static ProxyGamePlayer getProxyGamePlayer(UUID player){
+        ProxiedPlayer target = ProxyServer.getInstance().getPlayer(player);
+        ProxyGamePlayer ProxyGamePlayer;
+        if(players.containsKey(target)){
+            ProxyGamePlayer=players.get(target);
+        }else {
+            ProxyGamePlayer=new ProxyGamePlayer(player);
+        }
+        return ProxyGamePlayer;
     }
 
 }
