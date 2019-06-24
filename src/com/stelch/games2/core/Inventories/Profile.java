@@ -12,7 +12,7 @@ import org.bukkit.inventory.ItemStack;
 public class Profile {
 
     public static Inventory get(Player player){
-        Inventory GameMenuInv = Bukkit.createInventory(null,9*3, Text.format("&e"+player.getName()+"'s Profile"));
+        Inventory GameMenuInv = Bukkit.createInventory(null,9*6, Text.format("&e"+player.getName()+"'s Profile"));
 
 
         ItemStack placeholder = new Item(Material.BLACK_STAINED_GLASS_PANE,"&r").setOnClick(new Item.click() {@Override public void run(Player param1Player) { }}).spigot();
