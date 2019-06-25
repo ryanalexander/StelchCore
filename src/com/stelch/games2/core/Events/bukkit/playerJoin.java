@@ -7,6 +7,7 @@ import com.stelch.games2.core.PlayerUtils.BukkitGamePlayer;
 import com.stelch.games2.core.Utils.Text;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -15,6 +16,7 @@ public class playerJoin implements Listener {
 
     @EventHandler
     public void PlayerJoin(org.bukkit.event.player.PlayerJoinEvent e){
+        e.getPlayer().getAttribute(Attribute.GENERIC_ATTACK_SPEED).setBaseValue(20);
         BukkitGamePlayer.players.put(e.getPlayer(),new BukkitGamePlayer(e.getPlayer().getName()));
         e.setJoinMessage("");
     }
