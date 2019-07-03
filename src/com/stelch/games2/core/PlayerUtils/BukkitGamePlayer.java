@@ -18,6 +18,8 @@ public class BukkitGamePlayer {
 
     private String username=null;
 
+    private boolean hide_players;
+
     private ranks rank;
 
     private String last_seen;
