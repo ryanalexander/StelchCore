@@ -25,6 +25,8 @@ public class ProxyGamePlayer {
 
     private ranks rank;
 
+    private String last_seen;
+
     private boolean stored = false;
 
     private boolean retrying = false;
@@ -57,6 +59,7 @@ public class ProxyGamePlayer {
                 this.username=results.getString("username");
                 this.uuid=UUID.fromString(results.getString("uuid"));
                 this.rank=ranks.valueOf(results.getString("rank").toUpperCase());
+                this.last_seen=results.getString("last_seen");
                 this.stored=true;
             }
         } catch (Exception e){
