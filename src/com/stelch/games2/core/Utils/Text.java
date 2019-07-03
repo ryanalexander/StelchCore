@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import java.lang.reflect.Constructor;
 
 public class Text {
+
     public static BaseComponent[] build(String str) { return (new ComponentBuilder("").appendLegacy(str.replaceAll("&","§")).create()); }
 
     public static BaseComponent[] build(String text, String hover) { return (new ComponentBuilder("").appendLegacy(text.replaceAll("&","§")).event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, (new ComponentBuilder(hover)).create())).create()); }

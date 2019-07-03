@@ -6,6 +6,8 @@ import com.stelch.games2.core.Events.bukkit.playerJoin;
 import com.stelch.games2.core.Events.bukkit.playerLeave;
 import com.stelch.games2.core.InventoryUtils.Item;
 import org.bukkit.Bukkit;
+import org.bukkit.GameRule;
+import org.bukkit.World;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -35,6 +37,14 @@ public class BukkitCore extends JavaPlugin {
          * Register Bukkit Commands
          */
         getCommand("admin").setExecutor(new admin());
+
+        /*
+         * Prevent Weather Cycle and Daylight Cycle
+         */
+        for(World w : Bukkit.getWorlds()){
+            w.setGameRule(GameRule.DO_WEATHER_CYCLE,false);
+            w.setGameRule(GameRule.DO_DAYLIGHT_CYCLE,false);
+        }
     }
 
 }
