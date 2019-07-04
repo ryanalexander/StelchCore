@@ -8,7 +8,8 @@ public enum ranks {
     ULTRA(3,"&d"),
     BUILDER(8,"&3"),
     ADMIN(10,"&c"),
-    OWNER(11,"&9");
+    DEV(11,"&6"),
+    OWNER(12,"&9");
     private int level;
     private String rank;
     public int getLevel() {return this.level;}

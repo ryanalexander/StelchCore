@@ -17,6 +17,7 @@ public class RankMenu {
         Inventory GameMenuInv = Bukkit.createInventory(null,9*3, Text.format(String.format("&eSetting rank for %s",player.getUsername())));
 
         ItemStack placeholder = new Item(Material.BLACK_STAINED_GLASS_PANE,"&r").setOnClick(new Item.click() {@Override public void run(Player param1Player) { }}).spigot();
+
         for(int i=0;i<GameMenuInv.getSize();i++){GameMenuInv.setItem(i,placeholder);}
         int i = 10;
         for(ranks rank : ranks.values()){
@@ -31,6 +32,8 @@ public class RankMenu {
                 }
             });
             GameMenuInv.setItem(i,r.spigot());
+            if(i==8){i++;}
+            if(i==17){i++;}
             i++;
         }
 

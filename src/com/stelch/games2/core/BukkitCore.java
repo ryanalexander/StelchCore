@@ -5,11 +5,14 @@ import com.stelch.games2.core.Events.bukkit.playerChat;
 import com.stelch.games2.core.Events.bukkit.playerJoin;
 import com.stelch.games2.core.Events.bukkit.playerLeave;
 import com.stelch.games2.core.InventoryUtils.Item;
+import com.stelch.games2.core.Utils.configValues;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRule;
 import org.bukkit.World;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.HashMap;
 
 public class BukkitCore extends JavaPlugin {
 
@@ -17,6 +20,11 @@ public class BukkitCore extends JavaPlugin {
      * API Changeable options
      */
     public static boolean coreChatManager = true;
+
+    /*
+     * Server Configuration
+     */
+    public static HashMap<configValues, Boolean> config_option = new HashMap<>();
 
     @Override
     public void onEnable() {

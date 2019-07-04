@@ -9,6 +9,7 @@ public class playerLeave implements Listener {
 
     @EventHandler
     public void onLeave(PlayerQuitEvent e){
+        e.setQuitMessage("");
         BukkitGamePlayer.players.remove(e.getPlayer());
     }
 
