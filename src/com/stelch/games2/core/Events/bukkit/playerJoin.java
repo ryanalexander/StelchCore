@@ -14,6 +14,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
+import redis.clients.jedis.Jedis;
+
+import static org.bukkit.Bukkit.getServer;
 
 public class playerJoin implements Listener {
 
@@ -25,6 +28,10 @@ public class playerJoin implements Listener {
             if(player.getRank().getLevel()<=8){
                 e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST,Text.format("&aPortal> &7This server's whitelist is currently enabled."));
             }
+        }
+        System.out.println("[Redis] Pushing player count to network.");
+        try (Jedis jedis = BukkitCore.pool.getResource()){
+            jedis.set(String.format("SERVER|%s|playercount",BukkitCore.config.getString("uuid")),getServer().getOnlinePlayers().size()+"");
         }
     }
 

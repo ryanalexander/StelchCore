@@ -46,6 +46,10 @@ public class Item implements Listener {
         }
     }
 
+    public void setName(String name){ this.im.setDisplayName(Text.format(name)); }
+
+    public void setMaterial(Material mat){ this.is.setType(mat); }
+
     public void setAmount(int amount){
         is.setAmount(amount);
     }

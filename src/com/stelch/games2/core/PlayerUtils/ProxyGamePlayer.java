@@ -1,13 +1,14 @@
 package com.stelch.games2.core.PlayerUtils;
 
 
+import com.stelch.games2.core.BungeeCore;
 import com.stelch.games2.core.Utils.SQL;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import redis.clients.jedis.Jedis;
 
 import java.sql.ResultSet;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -51,43 +52,35 @@ public class ProxyGamePlayer {
         resolvePlayer();
     }
 
+    /**
+     * Jedis integration. This version will <br/>
+     * be used for the "infrastructure upgrade" as DB tech will be changed.
+     */
     public void resolvePlayer() {
-        SQL sql = new SQL("35.192.213.70",3306,"root","Garcia#02","games");
-        ResultSet results = sql.query(String.format("SELECT * FROM `players` WHERE `%s` = '%s'",((this.uuid!=null)?"uuid":"username"),((this.uuid!=null)?this.uuid:this.username)));
-        try {
-            while (results.next()) {
-                this.username=results.getString("username");
-                this.uuid=UUID.fromString(results.getString("uuid"));
-                this.rank=ranks.valueOf(results.getString("rank").toUpperCase());
-                this.last_seen=results.getString("last_seen");
-                this.stored=true;
-            }
-        } catch (Exception e){
-            if(retrying){
-                this.username="undefined";
-                e.printStackTrace();
-                this.retrying=false;
-            }else {
-                createPlayer();
-                this.retrying=true;
-                resolvePlayer();
-            }
-        }
-        if(!this.stored){
-            if(!(ProxyServer.getInstance().getPlayer(this.uuid)!=null||ProxyServer.getInstance().getPlayer(this.username)!=null))
-                return;
-            createPlayer();
-            resolvePlayer();
+        try (Jedis jedis = BungeeCore.pool.getResource()){
+            System.out.println("[ProxyPlayer] Fetched player profile for "+this.uuid);
+            String username;
+            String rank;
+            username=jedis.get(String.format("PLAYER|%s|name",this.uuid));
+            rank=jedis.get(String.format("PLAYER|%s|rank",this.uuid));
+            if(username==null){
+                createPlayer();return;}
+            this.username=username;
+            this.rank=ranks.valueOf(rank);
+            this.stored=true;
+            System.out.println(String.format("[ProxyPlayer] UUID: %s USERNAME: %s RANK: %s",this.uuid,this.username,this.rank.name()));
         }
     }
 
     private void createPlayer() {
         if(!(ProxyServer.getInstance().getPlayer(this.uuid)!=null||ProxyServer.getInstance().getPlayer(this.username)!=null))
             return;
-        SQL sql = new SQL("35.192.213.70",3306,"root","Garcia#02","games");
-        sql.query(String.format("INSERT INTO `games`.`players` (`username`, `uuid`, `rank`) VALUES ('%s', '%s', '%s')",this.player.getName(),this.uuid,ranks.MEMBER),true);
+        System.out.println("[ProxyPlayer] Created Redis instance for "+this.username);
+        try (Jedis jedis = BungeeCore.pool.getResource()){
+            jedis.set(String.format("PLAYER|%s|name",this.uuid),this.username);
+            jedis.set(String.format("PLAYER|%s|rank",this.uuid),ranks.MEMBER.name());
+        }
     }
-
     public boolean isStored() {
         return stored;
     }
