@@ -1,10 +1,7 @@
 package com.stelch.games2.core;
 
 import com.stelch.games2.core.Commands.bungee.servers;
-import com.stelch.games2.core.Events.bungee.playerChangeServer;
-import com.stelch.games2.core.Events.bungee.playerJoin;
-import com.stelch.games2.core.Events.bungee.playerLeave;
-import com.stelch.games2.core.Events.bungee.proxyPing;
+import com.stelch.games2.core.Events.bungee.*;
 import com.stelch.games2.core.Utils.JedisUtils;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -21,7 +18,7 @@ public class BungeeCore extends Plugin {
 
     public static JedisPool pool;
 
-    private static HashMap<String, ServerInfo> servers=new HashMap<>();
+    public static HashMap<String, ServerInfo> servers=new HashMap<>();
 
     @Override
     public void onEnable() {
@@ -41,6 +38,7 @@ public class BungeeCore extends Plugin {
 
         getProxy().getPluginManager().registerListener(this,new playerChangeServer());
         getProxy().getPluginManager().registerListener(this,new playerJoin());
+        getProxy().getPluginManager().registerListener(this,new playerKick());
         getProxy().getPluginManager().registerListener(this,new playerLeave());
         getProxy().getPluginManager().registerListener(this,new proxyPing());
 
@@ -103,7 +101,7 @@ public class BungeeCore extends Plugin {
         },1,2, TimeUnit.SECONDS);
     }
 
-    private class GameServer {
+    public class GameServer {
         private String uuid;
         private String name;
         private String state;

@@ -21,7 +21,7 @@ import java.util.HashMap;
 
 public class BukkitCore extends JavaPlugin {
 
-    public static JedisPool pool;
+    public static JedisPool pool=null;
 
     /*
      * API Changeable options
@@ -90,8 +90,8 @@ public class BukkitCore extends JavaPlugin {
             jedis.set(String.format("SERVER|%s|ipport",getConfig().getString("uuid")),getServer().getIp()+":"+getServer().getPort());
             jedis.set(String.format("SERVER|%s|type",getConfig().getString("uuid")),getConfig().getString("server-type"));
             jedis.set(String.format("SERVER|%s|playercount",getConfig().getString("uuid")),getServer().getOnlinePlayers().size()+"");
-            jedis.set(String.format("SERVER|%s|game",getConfig().getString("uuid")),"undefined");
-            jedis.set(String.format("SERVER|%s|state",getConfig().getString("uuid")),"STARTING");
+            jedis.set(String.format("SERVER|%s|game",getConfig().getString("uuid")),API.getGame());
+            jedis.set(String.format("SERVER|%s|state",getConfig().getString("uuid")),API.getState());
         }
     }
 
