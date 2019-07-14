@@ -30,5 +30,14 @@
     <orderEntry type="library" name="spigot-1.14.2" level="application" />
     <orderEntry type="library" name="BungeeCord (1)" level="application" />
     <orderEntry type="library" exported="" name="redis.clients:jedis:3.0.1" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../lib/annotations-17.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
