@@ -28,14 +28,20 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
+import java.util.Calendar;
 import java.util.HashMap;
+import java.util.TimeZone;
+import java.util.UUID;
 
 public class BukkitCore extends JavaPlugin {
 
     public static JedisPool pool=null;
+    public static UUID uuid=UUID.randomUUID();
+    public static String serverName=null;
 
     /*
      * API Changeable options
@@ -100,32 +106,43 @@ public class BukkitCore extends JavaPlugin {
          */
         System.out.println("[Redis] Pushing server to network.");
         try (Jedis jedis = BukkitCore.pool.getResource()){
-            jedis.set(String.format("SERVER|%s|name",getConfig().getString("uuid")),getConfig().getString("server-name"));
-            jedis.set(String.format("SERVER|%s|ipport",getConfig().getString("uuid")),getServer().getIp()+":"+getServer().getPort());
-            jedis.set(String.format("SERVER|%s|type",getConfig().getString("uuid")),getConfig().getString("server-type"));
-            jedis.set(String.format("SERVER|%s|playercount",getConfig().getString("uuid")),getServer().getOnlinePlayers().size()+"");
-            jedis.set(String.format("SERVER|%s|game",getConfig().getString("uuid")),API.getGame());
-            jedis.set(String.format("SERVER|%s|state",getConfig().getString("uuid")),API.getState());
+            jedis.set(String.format("SERVER|%s|ipport",uuid),getServer().getIp()+":"+getServer().getPort());
+            jedis.set(String.format("SERVER|%s|type",uuid),getConfig().getString("server-type"));
+            jedis.set(String.format("SERVER|%s|playercount",uuid),getServer().getOnlinePlayers().size()+"");
+            jedis.set(String.format("SERVER|%s|game",uuid),API.getGame());
+            jedis.set(String.format("SERVER|%s|state",uuid),API.getState());
+            jedis.set(String.format("SERVER|%s|last_poll",uuid), Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis()+"");
         }
-    }
+        new BukkitRunnable(){
+            @Override
+            public void run() {
+                try (Jedis jedis = BukkitCore.pool.getResource()){
+                    String name = jedis.get(String.format("SERVER|%s|name",uuid));
+                    if(name!=null){
+                        getConfig().set("server-name",name);
+                        serverName=name;
+                        cancel();
+                    }else {
+                        System.out.println("Failed to get name. Trying again soon.");
+                    }
+                }
+            }
+        }.runTaskTimer(this,0L,(20*5));
 
-    @Override
-    public void onDisable() {
-        /**
-         * Disconnect Jedis client
-         */
-        /**
-         * REM to Bungee
-         */
-        System.out.println("[Redis] Removing server from network.");
-        try (Jedis jedis = BukkitCore.pool.getResource()){
-            jedis.del(String.format("SERVER|%s|name",getConfig().getString("uuid")));
-            jedis.del(String.format("SERVER|%s|ipport",getConfig().getString("uuid")));
-            jedis.del(String.format("SERVER|%s|type",getConfig().getString("uuid")));
-            jedis.del(String.format("SERVER|%s|playercount",getConfig().getString("uuid")));
-            jedis.del(String.format("SERVER|%s|game",getConfig().getString("uuid")));
-            jedis.del(String.format("SERVER|%s|state",getConfig().getString("uuid")));
-        }
+        new BukkitRunnable(){
+            @Override
+            public void run() {
+                try (Jedis jedis = BukkitCore.pool.getResource()){
+                    if(serverName!=null)jedis.set(String.format("SERVER|%s|name",uuid),serverName);
+                    jedis.set(String.format("SERVER|%s|ipport",uuid),getServer().getIp()+":"+getServer().getPort());
+                    jedis.set(String.format("SERVER|%s|type",uuid),getConfig().getString("server-type"));
+                    jedis.set(String.format("SERVER|%s|playercount",uuid),getServer().getOnlinePlayers().size()+"");
+                    jedis.set(String.format("SERVER|%s|game",uuid),API.getGame());
+                    jedis.set(String.format("SERVER|%s|state",uuid),API.getState());
+                    jedis.set(String.format("SERVER|%s|last_poll",uuid), Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis()+"");
+                }
+            }
+        }.runTaskTimer(this,0L,(20*5));
     }
 
 }

@@ -25,7 +25,7 @@ public class API {
         API.game=game;
         if(BukkitCore.pool==null){return;}
         try (Jedis jedis = BukkitCore.pool.getResource()){
-            jedis.set(String.format("SERVER|%s|game",BukkitCore.config.get("uuid")),API.game);
+            jedis.set(String.format("SERVER|%s|game",BukkitCore.uuid),API.game);
         }
     }
 
@@ -33,7 +33,7 @@ public class API {
         API.state=state;
         if(BukkitCore.pool==null){return;}
         try (Jedis jedis = BukkitCore.pool.getResource()){
-            jedis.set(String.format("SERVER|%s|state",BukkitCore.config.get("uuid")),API.state);
+            jedis.set(String.format("SERVER|%s|state",BukkitCore.uuid),API.state);
         }
     }
 

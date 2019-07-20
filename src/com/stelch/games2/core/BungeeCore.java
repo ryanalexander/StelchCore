@@ -14,6 +14,7 @@
 
 package com.stelch.games2.core;
 
+import com.stelch.games2.core.Commands.bungee.hub;
 import com.stelch.games2.core.Commands.bungee.servers;
 import com.stelch.games2.core.Events.bungee.*;
 import com.stelch.games2.core.Utils.JedisUtils;
@@ -32,19 +33,21 @@ public class BungeeCore extends Plugin {
 
     public static JedisPool pool;
 
-    public static HashMap<String, ServerInfo> servers=new HashMap<>();
+    public static HashMap<String, GameServer> servers=new HashMap<>();
+    public static HashMap<String, HashMap<Integer,String>> category_servers = new HashMap<>();
 
     @Override
     public void onEnable() {
-     /*
-     * Define Plugin Manager
-     */
+         /*
+         * Define Plugin Manager
+         */
         PluginManager pm = getProxy().getPluginManager();
 
         /*
          * Register commands
          */
         pm.registerCommand(this,new servers());
+        pm.registerCommand(this,new hub());
 
         /*
          * Register BungeeCord Events
@@ -71,63 +74,156 @@ public class BungeeCore extends Plugin {
         getProxy().getScheduler().schedule(this, new Runnable() {
             @Override
             public void run() {
-                try (Jedis jedis = BungeeCore.pool.getResource()){
-                    Set<String> names = jedis.keys("SERVER|*");
-                    List<String> server_uuids = new ArrayList<>(servers.keySet());
-                    HashMap<String,GameServer> new_servers = new HashMap<>();
-
-                    java.util.Iterator<String> it = names.iterator();
-                    while(it.hasNext()) {
-                        String s = it.next();
-                        String[] args = s.split("[|]");
-                        String uuid = args[1];
-                        String datafield = args[2];
-                        String data = jedis.get(s);
-                        if(server_uuids.contains(uuid)){server_uuids.remove(uuid);}
-                        if(servers.containsKey(uuid)){continue;}
-                        GameServer server = new_servers.containsKey(uuid)?new_servers.get(uuid):new GameServer(uuid);
-                        switch(datafield.toLowerCase()){
-                            case "name":
-                                server.setName(data);
-                                break;
-                            case "ipport":
-                                String[] i = data.split("[:]");
-                                server.setIp(i[0]);
-                                server.setPort(Integer.parseInt(i[1]));
-                            case "game":
-                                server.setGame(data);
+                ArrayList<String> new_uuid = new ArrayList<>();
+                for(Map.Entry<String,GameServer> serverPayload : getServers().entrySet()){
+                    new_uuid.add(serverPayload.getValue().uuid);
+                    GameServer server = serverPayload.getValue();
+                    if(server.ip==null)continue;
+                    if(servers.containsKey(server.uuid)){
+                        if((Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis()-server.lastPoll)>6000||server.lastPoll==0){
+                            try(Jedis jedis = pool.getResource()){
+                                System.out.println(String.format("REMOVED DEAD SERVER [NAME %s]",server.name));
+                                jedis.del(String.format("SERVER|%s|name",server.uuid));
+                                jedis.del(String.format("SERVER|%s|ipport",server.uuid));
+                                jedis.del(String.format("SERVER|%s|playercount",server.uuid));
+                                jedis.del(String.format("SERVER|%s|game",server.uuid));
+                                jedis.del(String.format("SERVER|%s|state",server.uuid));
+                                jedis.del(String.format("SERVER|%s|last_poll",server.uuid));
+                                category_servers.get(server.type).remove(server.id);
+                                ProxyServer.getInstance().getServers().remove(server.getName());
+                                servers.remove(server.uuid);
+                            }
                         }
-                        new_servers.put(uuid,server);
+                        continue;
                     }
-                    for(Map.Entry<String,GameServer> server : new_servers.entrySet()){
-                        if(servers.containsKey(server.getKey())){continue;}
-                        ServerInfo serverInfo = server.getValue().build();
-                        servers.put(server.getKey(),serverInfo);
-                        ProxyServer.getInstance().getServers().put(server.getValue().name,serverInfo);
+
+                    int server_id = getLowestIdOfGroup(server.getType());
+                    if(!(category_servers.get(server.getType()).containsValue(server.uuid))){
+                        category_servers.get(server.getType()).put(server_id,server.uuid);
                     }
-                    for(String string : server_uuids) {
-                        System.out.println("Removed: "+string);
-                        ProxyServer.getInstance().getServers().remove(servers.get(string).getName());
-                        servers.remove(string);
+                    String name = server.getType()+server_id;
+                    System.out.println(String.format("ADDED NEW SERVER [NAME %s]",name));
+                    try(Jedis jedis = pool.getResource()){
+                        jedis.set(String.format("SERVER|%s|name",server.uuid),name);
+                    }
+                    server.setId(server_id);
+                    server.setName(name);
+                    ProxyServer.getInstance().getServers().put(name,server.build());
+                    servers.put(server.uuid,server);
+                }
+                for(GameServer server : servers.values()){
+                    System.out.println(new_uuid);
+                    if(!(new_uuid.contains(server.uuid))){
+                        System.out.println(String.format("REMOVED DEAD SERVER [NAME %s]",server.name));
+                        category_servers.get(server.type).remove(server.id);
+                        ProxyServer.getInstance().getServers().remove(server.getName());
+                        servers.remove(server.uuid);
                     }
                 }
+
             }
         },1,2, TimeUnit.SECONDS);
     }
 
+    /**
+     *
+     * @return UUID, GameServer object
+     */
+    private HashMap<String, GameServer> getServers() {
+        HashMap<String, GameServer> gameServers = new HashMap<>();
+
+        try (Jedis jedis = pool.getResource()){
+            Set<String> servers = jedis.keys("SERVER|*");
+            Iterator<String> iterator = servers.iterator();
+            while(iterator.hasNext()){
+                String argument = iterator.next();
+                String[] args = argument.split("[|]");
+                String uuid = args[1];
+                String field = args[2];
+                String data = jedis.get(argument);
+                GameServer server;
+                if(gameServers.containsKey(uuid)){server=gameServers.get(uuid);}else{server=new GameServer(uuid);gameServers.put(uuid,server);}
+
+                switch(field.toUpperCase()){
+                    case "NAME":
+                        server.setName(data.toUpperCase());
+                        break;
+                    case "IPPORT":
+                        String[] i = data.split("[:]");
+                        server.setIp(i[0]);
+                        server.setPort(Integer.parseInt(i[1]));
+                        break;
+                    case "GAME":
+                        server.setGame(data);
+                        break;
+                    case "TYPE":
+                        addCategoryIfDoesntExist(data.toUpperCase());
+                        server.setType(data.toUpperCase());
+                        break;
+                    case "PLAYERCOUNT":
+                        server.setPlayercount(Integer.valueOf(data));
+                        break;
+                    case "LAST_POLL":
+                        server.setLastPoll(data);
+                        break;
+                }
+                gameServers.put(uuid,server);
+            }
+        }
+        return gameServers;
+    }
+
+    private int getLowestIdOfGroup(String group){
+        if(category_servers.containsKey(group.toUpperCase())){
+            ArrayList<Integer> server_ids = new ArrayList<>();
+            for(Map.Entry<Integer, String> payload : category_servers.get(group.toUpperCase()).entrySet()) server_ids.add(payload.getKey());
+            for(int i=1;i<99;i++)
+                if(!(server_ids.contains(i)))return i;
+            return 0;
+        }else
+            return 0;
+    }
+
+    private void addCategoryIfDoesntExist(String catName){
+        if(!(category_servers.containsKey(catName))){
+            category_servers.put(catName,new HashMap<>());
+        }
+    }
+
     public class GameServer {
         private String uuid;
-        private String name;
+        private String name = null;
         private String state;
+        private String type;
         private String game;
         private String ip;
+        private long lastPoll=0;
+        private ServerInfo serverInfo=null;
+        private int id;
         private int port;
         private int playercount;
 
-        public GameServer(String uuid) {this.uuid=uuid;}
+        public GameServer(String uuid) {
+            this.uuid = uuid;
+        }
+
+        public void setLastPoll(String pollTime){
+            this.lastPoll=Long.valueOf(pollTime);
+        }
 
         public void setGame(String game) {
             this.game = game;
+        }
+
+        public void setType(String type) {
+            if (!category_servers.containsKey(type.toUpperCase())) {
+                category_servers.put(type.toUpperCase(), new HashMap<>());
+            }
+            this.type = type;
+        }
+
+        public String getType() {
+            return type != null ? type : "undefined";
         }
 
         public void setPlayercount(int playercount) {
@@ -149,8 +245,50 @@ public class BungeeCore extends Plugin {
         public void setState(String state) {
             this.state = state;
         }
+
+        public String getUuid() {
+            return uuid;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getIp() {
+            return ip;
+        }
+
+        public long getLastPoll() {
+            return lastPoll;
+        }
+
+        public String getState() {
+            return state;
+        }
+
+        public String getGame() {
+            return game;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public void setId(int id) {
+            this.id = id;
+        }
+
+        public ServerInfo getServerInfo() {
+            return serverInfo;
+        }
+
         public ServerInfo build() {
-            return ProxyServer.getInstance().constructServerInfo(this.name, InetSocketAddress.createUnresolved(this.ip, this.port),this.game,false);
+            if (this.ip == null) {
+                System.out.println("FAILED BUILDING BUNGEE SERVER [NoIP]");
+                return null;
+            }
+            this.serverInfo=((this.serverInfo==null)?ProxyServer.getInstance().constructServerInfo(this.name, InetSocketAddress.createUnresolved(this.ip, this.port), this.game, false):this.serverInfo);
+            return this.serverInfo;
         }
     }
 

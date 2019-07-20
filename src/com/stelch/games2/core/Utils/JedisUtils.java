@@ -22,14 +22,14 @@ public class JedisUtils {
     public static void init(redis.clients.jedis.JedisPool pool, BungeeCore c) {
         ClassLoader previous = Thread.currentThread().getContextClassLoader();
         System.out.println("[Redis] Connection began and cached.");
-        c.pool = new redis.clients.jedis.JedisPool("127.0.0.1");
+        c.pool = new redis.clients.jedis.JedisPool("mc2.stelch.gg");
         Thread.currentThread().setContextClassLoader(previous);
     }
 
     public static void init(redis.clients.jedis.JedisPool pool, BukkitCore c) {
         ClassLoader previous = Thread.currentThread().getContextClassLoader();
         System.out.println("[Redis] Connection began and cached.");
-        c.pool = new redis.clients.jedis.JedisPool("127.0.0.1");
+        c.pool = new redis.clients.jedis.JedisPool("mc2.stelch.gg");
         Thread.currentThread().setContextClassLoader(previous);
     }
 

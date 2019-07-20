@@ -45,7 +45,7 @@ public class playerJoin implements Listener {
         }
         System.out.println("[Redis] Pushing player count to network.");
         try (Jedis jedis = BukkitCore.pool.getResource()){
-            jedis.set(String.format("SERVER|%s|playercount",BukkitCore.config.getString("uuid")),getServer().getOnlinePlayers().size()+"");
+            jedis.set(String.format("SERVER|%s|playercount",BukkitCore.uuid),getServer().getOnlinePlayers().size()+1+"");
         }
     }
 

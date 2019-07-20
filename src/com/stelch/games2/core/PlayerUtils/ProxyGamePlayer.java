@@ -1,17 +1,3 @@
-/*
- *
- * *
- *  *
- *  * © Stelch Games 2019, distribution is strictly prohibited
- *  *
- *  * Changes to this file must be documented on push.
- *  * Unauthorised changes to this file are prohibited.
- *  *
- *  * @author Ryan Wood
- *  * @since 14/7/2019
- *
- */
-
 package com.stelch.games2.core.PlayerUtils;
 
 
@@ -70,6 +56,7 @@ public class ProxyGamePlayer {
      * Jedis integration. This version will <br/>
      * be used for the "infrastructure upgrade" as DB tech will be changed.
      */
+    /*
     public void resolvePlayer() {
         try (Jedis jedis = BungeeCore.pool.getResource()){
             System.out.println("[ProxyPlayer] Fetched player profile for "+this.uuid);
@@ -94,7 +81,38 @@ public class ProxyGamePlayer {
             jedis.set(String.format("PLAYER|%s|name",this.uuid),this.username);
             jedis.set(String.format("PLAYER|%s|rank",this.uuid),ranks.MEMBER.name());
         }
+    }*/
+    public void resolvePlayer() {
+        SQL sql = new SQL("35.192.213.70",3306,"root","Garcia#02","games");
+        ResultSet results = sql.query(String.format("SELECT * FROM `players` WHERE `uuid` = '%s'",this.uuid));
+        try {
+            while (results.next()) {
+                this.username=results.getString("username");
+                this.rank=ranks.valueOf(results.getString("rank").toUpperCase());
+                this.stored=true;
+            }
+        } catch (Exception e){
+            if(retrying){
+                this.username="undefined";
+                e.printStackTrace();
+                this.retrying=false;
+            }else {
+                createPlayer();
+                this.retrying=true;
+                resolvePlayer();
+            }
+        }
+        if(!this.stored){
+            createPlayer();
+            resolvePlayer();
+        }
     }
+
+    private void createPlayer() {
+        SQL sql = new SQL("35.192.213.70",3306,"root","Garcia#02","games");
+        sql.query(String.format("INSERT INTO `games`.`players` (`username`, `uuid`, `rank`) VALUES ('%s', '%s', '%s')",this.player.getName(),this.uuid,ranks.MEMBER),true);
+    }
+
     public boolean isStored() {
         return stored;
     }

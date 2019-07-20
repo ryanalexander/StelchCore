@@ -34,13 +34,15 @@ public class servers extends Command {
 
     public void execute(CommandSender sender, String[] args) {
         Map<String, ServerInfo> servers = ProxyServer.getInstance().getServers();
-        ComponentBuilder reply = new ComponentBuilder(new TextComponent(Text.build(String.format("&aPortal> &7There are &e%s&7 online servers.",servers.size())))).reset();
-        if(servers.size()<10) {
+        ComponentBuilder reply = new ComponentBuilder(new TextComponent(Text.build(String.format("&aPortal> &7There are &e%s&7 online servers.",servers.size()-1)))).reset();
+        if(servers.size()-1<10||(args.length>=1&&args[0].equalsIgnoreCase("-f"))) {
             reply.append(Text.format("&7[ "));
             for (ServerInfo server : servers.values()) {
+                if(server.getName().equalsIgnoreCase("hub01"))
+                    continue;
                 TextComponent component = new TextComponent(Text.build("&e" + server.getName() + " "));
                 component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.build("&aClick to connect.")));
-                component.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "server " + server.getName()));
+                component.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/server " + server.getName()));
                 reply.append(component);
             }
             reply.append(Text.format("&7]"));
